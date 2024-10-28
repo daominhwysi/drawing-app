@@ -83,11 +83,7 @@ const DrawingBoard = ({
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [showDownloadButton, setShowDownloadButton] = React.useState(false);
   const [isClient, setIsClient] = React.useState(false);
-  const [darkMode, setDarkMode] = React.useState(() => {
-    if (typeof window === 'undefined') return false;
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    return safeGetItem('drawingBoardDarkMode', prefersDark);
-  });
+  const [darkMode, setDarkMode] = React.useState(false);
 
   // Set isClient to true on mount
   React.useEffect(() => {
