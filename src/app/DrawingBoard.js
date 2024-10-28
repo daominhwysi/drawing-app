@@ -17,49 +17,8 @@ import {
   Download,
   Menu,
   X,
-  Ruler,
-  Palette
+  Ruler
 } from 'lucide-react';
-
-const PRESET_COLORS = [
-  '#000000', '#FFFFFF', '#FF4500', '#FFA500',
-  '#FF0000', '#FF1493', '#800080', '#4B0082',
-  '#008000', '#C0C0C0', '#FFA500', '#4169E1',
-  '#00FF00', '#40E0D0', '#0000FF', '#FFD700'
-];
-
-const safeLocalStorage = {
-  getItem: (key) => {
-    try {
-      if (typeof window !== 'undefined') {
-        return window.localStorage.getItem(key);
-      }
-      return null;
-    } catch (e) {
-      console.warn('localStorage is not available:', e);
-      return null;
-    }
-  },
-  setItem: (key, value) => {
-    try {
-      if (typeof window !== 'undefined') {
-        window.localStorage.setItem(key, value);
-      }
-    } catch (e) {
-      console.warn('localStorage is not available:', e);
-    }
-  }
-};
-
-const getInitialDarkMode = () => {
-  if (typeof window === 'undefined') return false;
-  
-  const savedMode = safeLocalStorage.getItem('drawingBoardDarkMode');
-  if (savedMode !== null) {
-    return savedMode === 'true';
-  }
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ?? false;
-};
 
 const DrawingBoard = ({
   tool,
@@ -91,10 +50,13 @@ const DrawingBoard = ({
   const [gridSize, setGridSize] = React.useState(45);
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [showDownloadButton, setShowDownloadButton] = React.useState(false);
-  const [showColorPicker, setShowColorPicker] = React.useState(false);
-  const [currentColor, setCurrentColor] = React.useState('#000000');
-  const [customColor, setCustomColor] = React.useState('#000000');
-  const [darkMode, setDarkMode] = React.useState(getInitialDarkMode);
+  const [darkMode, setDarkMode] = React.useState(() => {
+    const savedMode = localStorage.getItem('drawingBoardDarkMode');
+    if (savedMode !== null) {
+      return savedMode === 'true';
+    }
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
 
   React.useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
@@ -108,10 +70,7 @@ const DrawingBoard = ({
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
-  React.useEffect(() => {
-    safeLocalStorage.setItem('drawingBoardDarkMode', darkMode);
-    drawElements();
-  }, [darkMode]);
+
   React.useEffect(() => {
     localStorage.setItem('drawingBoardDarkMode', darkMode);
     drawElements();
@@ -200,10 +159,12 @@ const DrawingBoard = ({
     ctx.translate(panOffset.x * scale - scaleOffset.x, panOffset.y * scale - scaleOffset.y);
     ctx.scale(scale, scale);
 
+    const drawColor = darkMode ? '#000000' : '#ffffff';
+
     elements.forEach(element => {
       if (element.type === 'pencil') {
         ctx.beginPath();
-        ctx.strokeStyle = element.color || currentColor;
+        ctx.strokeStyle = drawColor;
         ctx.lineWidth = element.size;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
@@ -218,13 +179,13 @@ const DrawingBoard = ({
         ctx.stroke();
       } else if (element.type === 'line') {
         ctx.beginPath();
-        ctx.strokeStyle = element.color || currentColor;
+        ctx.strokeStyle = drawColor;
         ctx.lineWidth = 2;
         ctx.moveTo(element.x1, element.y1);
         ctx.lineTo(element.x2, element.y2);
         ctx.stroke();
       } else if (element.type === 'rectangle') {
-        ctx.strokeStyle = element.color || currentColor;
+        ctx.strokeStyle = drawColor;
         ctx.lineWidth = 2;
         ctx.strokeRect(
           element.x1,
@@ -234,33 +195,18 @@ const DrawingBoard = ({
         );
       } else if (element.type === 'text') {
         ctx.font = '24px sans-serif';
-        ctx.fillStyle = element.color || currentColor;
+        ctx.fillStyle = drawColor;
         ctx.fillText(element.text, element.x1, element.y1);
       }
     });
 
     ctx.restore();
-  }, [elements, scale, panOffset, scaleOffset, currentColor]);
+  }, [elements, scale, panOffset, scaleOffset, darkMode]);
+
   React.useEffect(() => {
     drawBackground();
     drawElements();
   }, [drawBackground, drawElements]);
-  const ColorPickerButton = () => (
-    <div className="relative">
-      <button
-        onClick={() => setShowColorPicker(!showColorPicker)}
-        className="p-2 rounded hover:bg-opacity-80 flex items-center gap-1"
-        title="Color Picker"
-      >
-        <div
-          className="w-5 h-5 rounded-full border border-gray-300"
-          style={{ backgroundColor: currentColor }}
-        />
-        <Palette size={16} color={iconColor} />
-      </button>
-      {showColorPicker && <ColorPicker />}
-    </div>
-  );
 
   React.useEffect(() => {
     const handleResize = () => {
@@ -292,55 +238,7 @@ const DrawingBoard = ({
   const iconColor = darkMode ? "#000000" : "#ffffff"; // Đảo ngược màu icon
   const barBgColor = darkMode ? "bg-white" : "bg-gray-800"; // Giữ nguyên màu nền
   const textColor = darkMode ? 'text-black' : 'text-white'; // Đảo ngược màu text
-  const handleColorChange =(color)=>{
-    setCurrentColor(color);
-    setShowColorPicker(false);
-  };
-  const handleCustomColorChange = (e) =>{
-    const newColor = e.target.value;
-    setCustomColor(newColor);
-    setCurrentColor(newColor);
-  };
-  const ColorPicker = () => (
-    <div className={`absolute top-full mt-2 p-2 ${barBgColor} rounded-lg shadow-lg`}>
-      <div className="grid grid-cols-4 gap-2 mb-2">
-        {PRESET_COLORS.map((color, index) => (
-          <button
-            key={index}
-            onClick={() => handleColorChange(color)}
-            className="w-6 h-6 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            style={{ 
-              backgroundColor: color,
-              border: currentColor === color ? '2px solid #3B82F6' : '1px solid #D1D5DB'
-            }}
-          />
-        ))}
-      </div>
-      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-gray-600">
-        <input
-          type="color"
-          value={customColor}
-          onChange={handleCustomColorChange}
-          className="w-8 h-8 p-0 border-0 rounded cursor-pointer"
-        />
-        <input
-          type="text"
-          value={customColor.toUpperCase()}
-          onChange={(e) => {
-            const val = e.target.value;
-            if (/^#[0-9A-F]{0,6}$/i.test(val)) {
-              setCustomColor(val);
-              if (val.length === 7) setCurrentColor(val);
-            }
-          }}
-          className={`w-20 px-1 py-0.5 text-sm rounded ${
-            darkMode ? 'bg-gray-700 text-white' : 'bg-white text-black'
-          }`}
-          placeholder="#000000"
-        />
-      </div>
-    </div>
-  );
+  
   return (
     <div className={`relative w-full h-screen ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
       {/* Corner Menu Button */}
@@ -485,7 +383,6 @@ const DrawingBoard = ({
         </div>
 
         <div className="flex items-center gap-1 px-2">
-          <ColorPickerButton />
           <button
             onClick={() => setTool('selection')}
             className={`p-2 rounded ${tool === 'selection' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
