@@ -19,7 +19,38 @@ import {
   X,
   Ruler
 } from 'lucide-react';
+const isLocalStorageAvailable = () => {
+  try {
+    const testKey = '__test__';
+    localStorage.setItem(testKey, testKey);
+    localStorage.removeItem(testKey);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
 
+// Helper function to safely get item from localStorage
+const safeGetItem = (key, defaultValue) => {
+  if (!isLocalStorageAvailable()) return defaultValue;
+  try {
+    const item = localStorage.getItem(key);
+    return item !== null ? JSON.parse(item) : defaultValue;
+  } catch (e) {
+    console.warn(`Error reading ${key} from localStorage:`, e);
+    return defaultValue;
+  }
+};
+
+// Helper function to safely set item in localStorage
+const safeSetItem = (key, value) => {
+  if (!isLocalStorageAvailable()) return;
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch (e) {
+    console.warn(`Error writing ${key} to localStorage:`, e);
+  }
+};
 const DrawingBoard = ({
   tool,
   setTool,
@@ -51,18 +82,16 @@ const DrawingBoard = ({
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [showDownloadButton, setShowDownloadButton] = React.useState(false);
   const [darkMode, setDarkMode] = React.useState(() => {
-    const savedMode = localStorage.getItem('drawingBoardDarkMode');
-    if (savedMode !== null) {
-      return savedMode === 'true';
-    }
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return safeGetItem('drawingBoardDarkMode', prefersDark);
   });
+
 
   React.useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e) => {
       const savedMode = localStorage.getItem('drawingBoardDarkMode');
-      if (savedMode === null) {
+      if (!isLocalStorageAvailable() || localStorage.getItem('drawingBoardDarkMode') === null) {
         setDarkMode(e.matches);
       }
     };
@@ -72,7 +101,7 @@ const DrawingBoard = ({
   }, []);
 
   React.useEffect(() => {
-    localStorage.setItem('drawingBoardDarkMode', darkMode);
+    safeSetItem('drawingBoardDarkMode', darkMode);
     drawElements();
   }, [darkMode]);
 
