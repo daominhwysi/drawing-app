@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { 
   Undo2, 
@@ -19,6 +20,7 @@ import {
   X,
   Ruler
 } from 'lucide-react';
+
 const isLocalStorageAvailable = () => {
   try {
     const testKey = '__test__';
@@ -30,7 +32,6 @@ const isLocalStorageAvailable = () => {
   }
 };
 
-// Helper function to safely get item from localStorage
 const safeGetItem = (key, defaultValue) => {
   if (!isLocalStorageAvailable()) return defaultValue;
   try {
@@ -42,7 +43,6 @@ const safeGetItem = (key, defaultValue) => {
   }
 };
 
-// Helper function to safely set item in localStorage
 const safeSetItem = (key, value) => {
   if (!isLocalStorageAvailable()) return;
   try {
@@ -51,6 +51,7 @@ const safeSetItem = (key, value) => {
     console.warn(`Error writing ${key} to localStorage:`, e);
   }
 };
+
 const DrawingBoard = ({
   tool,
   setTool,
@@ -81,13 +82,21 @@ const DrawingBoard = ({
   const [gridSize, setGridSize] = React.useState(45);
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [showDownloadButton, setShowDownloadButton] = React.useState(false);
+  const [isClient, setIsClient] = React.useState(false);
   const [darkMode, setDarkMode] = React.useState(() => {
+    if (typeof window === 'undefined') return false;
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     return safeGetItem('drawingBoardDarkMode', prefersDark);
   });
 
+  // Set isClient to true on mount
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   React.useEffect(() => {
+    if (!isClient) return;
+    
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleChange = (e) => {
       const savedMode = localStorage.getItem('drawingBoardDarkMode');
@@ -98,12 +107,13 @@ const DrawingBoard = ({
 
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
+  }, [isClient]);
 
   React.useEffect(() => {
+    if (!isClient) return;
     safeSetItem('drawingBoardDarkMode', darkMode);
     drawElements();
-  }, [darkMode]);
+  }, [darkMode, isClient]);
 
   const drawBackground = React.useCallback(() => {
     const canvas = backgroundCanvasRef.current;
@@ -121,9 +131,8 @@ const DrawingBoard = ({
     const gridColor = darkMode ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.6)';
 
     if (backgroundType === 'grid') {
-      const majorGridSize = gridSize *5;
+      const majorGridSize = gridSize * 5;
       const majorGridColor = darkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)';
-      const minorGridColor = darkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)';
       ctx.beginPath();
       ctx.strokeStyle = gridColor;
       ctx.lineWidth = 0.5;
@@ -143,7 +152,6 @@ const DrawingBoard = ({
       ctx.strokeStyle = majorGridColor;
       ctx.lineWidth = 1.5;
 
-      // Tính offset cho grid lớn
       const majorOffsetX = offsetX - (offsetX % (majorGridSize * scale));
       const majorOffsetY = offsetY - (offsetY % (majorGridSize * scale));
       for (let x = majorOffsetX; x < width; x += majorGridSize * scale) {
@@ -151,7 +159,6 @@ const DrawingBoard = ({
         ctx.lineTo(x, height);
       }
 
-      // Vẽ các đường ngang lớn
       for (let y = majorOffsetY; y < height; y += majorGridSize * scale) {
         ctx.moveTo(0, y);
         ctx.lineTo(width, y);
@@ -170,13 +177,7 @@ const DrawingBoard = ({
       }
     }
   }, [backgroundType, gridSize, scale, panOffset, scaleOffset, darkMode]);
-  const toggleBackground = () => {
-    setBackgroundType(prev => {
-      if (prev === 'none') return 'grid';
-      if (prev === 'grid') return 'dots';
-      return 'none';
-    });
-  };
+
   const drawElements = React.useCallback(() => {
     const canvas = drawingCanvasRef.current;
     if (!canvas) return;
@@ -233,13 +234,8 @@ const DrawingBoard = ({
   }, [elements, scale, panOffset, scaleOffset, darkMode]);
 
   React.useEffect(() => {
-    drawBackground();
-    drawElements();
-  }, [drawBackground, drawElements]);
-
-  if (typeof window !== "undefined") {
-    // Client-side-only code
-    React.useEffect(() => {
+    if (!isClient) return;
+    
     const handleResize = () => {
       if (backgroundCanvasRef.current && drawingCanvasRef.current) {
         backgroundCanvasRef.current.width = window.innerWidth;
@@ -254,21 +250,36 @@ const DrawingBoard = ({
     window.addEventListener('resize', handleResize);
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
+  }, [isClient, drawBackground, drawElements]);
+
+  React.useEffect(() => {
+    drawBackground();
+    drawElements();
   }, [drawBackground, drawElements]);
-  }
+
+  const toggleBackground = () => {
+    setBackgroundType(prev => {
+      if (prev === 'none') return 'grid';
+      if (prev === 'grid') return 'dots';
+      return 'none';
+    });
+  };
 
   const toggleDarkMode = () => {
     setDarkMode(prev => !prev);
   };
+
   const handleDetectAndShowDownload = () => {
     handleDetectRegions();
     setShowDownloadButton(true);
     setIsMenuOpen(false);
-  };  
-  const iconColor = darkMode ? "#000000" : "#ffffff"; // Đảo ngược màu icon
-  const barBgColor = darkMode ? "bg-white" : "bg-gray-800"; // Giữ nguyên màu nền
-  const textColor = darkMode ? 'text-black' : 'text-white'; // Đảo ngược màu text
-  
+  };
+
+  const iconColor = darkMode ? "#000000" : "#ffffff";
+  const barBgColor = darkMode ? "bg-white" : "bg-gray-800";
+  const textColor = darkMode ? 'text-black' : 'text-white';
+
+  // Rest of your component's JSX remains the same...
   return (
     <div className={`relative w-full h-screen ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
       {/* Corner Menu Button */}
