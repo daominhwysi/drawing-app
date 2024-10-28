@@ -237,7 +237,9 @@ const DrawingBoard = ({
     drawElements();
   }, [drawBackground, drawElements]);
 
-  React.useEffect(() => {
+  if (typeof window !== "undefined") {
+    // Client-side-only code
+    React.useEffect(() => {
     const handleResize = () => {
       if (backgroundCanvasRef.current && drawingCanvasRef.current) {
         backgroundCanvasRef.current.width = window.innerWidth;
@@ -253,17 +255,16 @@ const DrawingBoard = ({
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, [drawBackground, drawElements]);
+  }
 
   const toggleDarkMode = () => {
     setDarkMode(prev => !prev);
   };
-  
   const handleDetectAndShowDownload = () => {
     handleDetectRegions();
     setShowDownloadButton(true);
     setIsMenuOpen(false);
   };  
-
   const iconColor = darkMode ? "#000000" : "#ffffff"; // Đảo ngược màu icon
   const barBgColor = darkMode ? "bg-white" : "bg-gray-800"; // Giữ nguyên màu nền
   const textColor = darkMode ? 'text-black' : 'text-white'; // Đảo ngược màu text
