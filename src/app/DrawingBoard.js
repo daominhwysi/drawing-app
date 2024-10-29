@@ -1,24 +1,5 @@
-
-import React from 'react';
-import { 
-  Undo2, 
-  Redo2, 
-  Pencil, 
-  Hand, 
-  Square, 
-  Eraser,
-  Sun,
-  Moon,
-  ZoomIn,
-  ZoomOut,
-  Grid,
-  GripHorizontal,
-  RotateCcw,
-  Scan,
-  Download,
-  Menu,
-  X,
-  Ruler
+import React, { useState, useEffect, useRef } from 'react';
+import {  Pencil, Hand, Square, Eraser,Sun, Moon,ZoomIn,ZoomOut,Grid,Minus,RotateCcw,Scan,Download,Menu,X,Ruler,Settings,Keyborad
 } from 'lucide-react';
 
 const isLocalStorageAvailable = () => {
@@ -52,28 +33,7 @@ const safeSetItem = (key, value) => {
   }
 };
 
-const DrawingBoard = ({
-  tool,
-  setTool,
-  elements,
-  pencilSize,
-  setPencilSize,
-  scale,
-  setScale,
-  onZoom,
-  undo,
-  redo,
-  action,
-  selectedElement,
-  panOffset,
-  scaleOffset,
-  handleMouseDown,
-  handleMouseMove,
-  handleMouseUp,
-  handleBlur,
-  captureDrawnArea,
-  handleDetectRegions,
-  handleDownloadRegions
+const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,setScale,onZoom,action,selectedElement,panOffset,scaleOffset,handleMouseDown,handleMouseMove,handleMouseUp,handleBlur,captureDrawnArea,handleDetectRegions,handleDownloadRegions
 }) => {
   const textAreaRef = React.useRef(null);
   const backgroundCanvasRef = React.useRef(null);
@@ -89,7 +49,7 @@ const DrawingBoard = ({
   React.useEffect(() => {
     setIsClient(true);
   }, []);
-
+  
   React.useEffect(() => {
     if (!isClient) return;
     
@@ -409,93 +369,83 @@ const DrawingBoard = ({
       )}
 
       {/* Main Toolbar */}
-      <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-1 ${barBgColor} rounded-lg shadow-lg p-2 z-10`}>
-        <div className="flex items-center gap-1 pr-2 border-r border-gray-200">
-          <button onClick={undo} className="p-2 rounded hover:bg-opacity-80" title="Undo">
-            <Undo2 size={20} color={iconColor} />
-          </button>
-          <button onClick={redo} className="p-2 rounded hover:bg-opacity-80" title="Redo">
-            <Redo2 size={20} color={iconColor} />
-          </button>
-        </div>
-
-        <div className="flex items-center gap-1 px-2">
+      <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-1 ${barBgColor} rounded-lg shadow-lg p-1 z-10`}>
+        <div className="flex items-center gap-1 px-1">
           <button
             onClick={() => setTool('selection')}
-            className={`p-2 rounded ${tool === 'selection' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
+            className={`p-1 rounded ${tool === 'selection' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
             title="Selection"
           >
-            <Hand size={20} color={tool === 'selection' ? '#ffffff' : iconColor} />
+            <Hand size={16} color={tool === 'selection' ? '#ffffff' : iconColor} />
           </button>
           <button
             onClick={() => setTool('line')}
-            className={`p-2 rounded ${tool === 'line' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
+            className={`p-1 rounded ${tool === 'line' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
             title="Line"
           >
-            <GripHorizontal size={20} color={tool === 'line' ? '#ffffff' : iconColor} />
+            <Minus size={16} color={tool === 'line' ? '#ffffff' : iconColor} />
           </button>
           <button
             onClick={() => setTool('rectangle')}
-            className={`p-2 rounded ${tool === 'rectangle' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
+            className={`p-1 rounded ${tool === 'rectangle' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
             title="Rectangle"
           >
-            <Square size={20} color={tool === 'rectangle' ? '#ffffff' : iconColor} />
+            <Square size={16} color={tool === 'rectangle' ? '#ffffff' : iconColor} />
           </button>
           <button
             onClick={() => setTool('pencil')}
-            className={`p-2 rounded ${tool === 'pencil' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
+            className={`p-1 rounded ${tool === 'pencil' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
             title="Pencil"
           >
-            <Pencil size={20} color={tool === 'pencil' ? '#ffffff' : iconColor} />
+            <Pencil size={16} color={tool === 'pencil' ? '#ffffff' : iconColor} />
           </button>
           <button
             onClick={() => setTool('eraser')}
-            className={`p-2 rounded ${tool === 'eraser' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
+            className={`p-1 rounded ${tool === 'eraser' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
             title="Eraser"
           >
-            <Eraser size={20} color={tool === 'eraser' ? '#ffffff' : iconColor} />
+            <Eraser size={16} color={tool === 'eraser' ? '#ffffff' : iconColor} />
           </button>
         {(tool === 'pencil') && (
-          <div className=' flex items-center gap-2 ml-2'>
-            <Ruler size={16} color={iconColor} />
+          <div className='flex items-center gap-1 ml-1'>
+            <Ruler size={14} color={iconColor} />
             <input
               type="range"
               min="1"
               max="20"
               value={pencilSize}
               onChange={(e) => setPencilSize(parseInt(e.target.value))}
-              className="w-24 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
+              className="w-20 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
               title="Pencil Size"
             />
-            <span className={'text-sm ${textColor}'}>{pencilSize}px</span>
+            <span className={`text-xs ${textColor}`}>{pencilSize}px</span>
           </div>
         )}
         </div>
-
-        <div className="flex items-center gap-1 pl-2 border-l border-gray-200">
+        <div className="flex items-center gap-1 pl-1 border-l border-gray-200">
           <button
             onClick={() => setScale(1)}
-            className="p-2 rounded hover:bg-opacity-80"
+            className="p-1 rounded hover:bg-opacity-80"
             title="Reset View"
           >
-            <RotateCcw size={20} color={iconColor} />
+            <RotateCcw size={16} color={iconColor} />
           </button>
           <button
             onClick={() => onZoom(-0.1)}
-            className="p-2 rounded hover:bg-opacity-80"
+            className="p-1 rounded hover:bg-opacity-80"
             title="Zoom Out"
           >
-            <ZoomOut size={20} color={iconColor} />
+            <ZoomOut size={16} color={iconColor} />
           </button>
-          <span className={`text-sm min-w-[4rem] text-center ${textColor}`}>
+          <span className={`text-xs min-w-[3rem] text-center ${textColor}`}>
             {Math.round(scale * 100)}%
           </span>
           <button
             onClick={() => onZoom(0.1)}
-            className="p-2 rounded hover:bg-opacity-80"
+            className="p-1 rounded hover:bg-opacity-80"
             title="Zoom In"
           >
-            <ZoomIn size={20} color={iconColor} />
+            <ZoomIn size={16} color={iconColor} />
           </button>
         </div>
       </div>

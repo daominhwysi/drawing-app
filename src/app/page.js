@@ -417,7 +417,7 @@ const App = () => {
     const canvas = document.getElementById("canvas");
     const context = canvas.getContext("2d");
     const roughCanvas = rough.canvas(canvas);
-  
+   
     // Clear canvas for redrawing
     context.clearRect(0, 0, canvas.width, canvas.height);
   
@@ -440,14 +440,15 @@ const App = () => {
   
     // Call drawBoundingBoxes to render detected regions
     drawBoundingBoxes(context, drawingRegions, scale);
-  
+    
     context.restore();
   }, [elements, action, selectedElement, panOffset, scale, drawingRegions]);
   
 
   useEffect(() => {
     const undoRedoFunction = event => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "z") {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z") {
+        event.preventDefault();
         if (event.shiftKey) {
           redo();
         } else {
@@ -455,7 +456,6 @@ const App = () => {
         }
       }
     };
-
     document.addEventListener("keydown", undoRedoFunction);
     return () => {
       document.removeEventListener("keydown", undoRedoFunction);
@@ -464,7 +464,12 @@ const App = () => {
   useEffect(() => {
     const panOrZoomFunction = event => {
       if (pressedKeys.has("Meta") || pressedKeys.has("Control")) {
-        onZoom(event.deltaY * -0.01);
+        event.preventDefault();
+        if (event.deltaY < 0) {
+          onZoom(0.1);
+        } else {
+          onZoom(-0.1);
+        }
       } else {
         setPanOffset(prevState => ({
           x: prevState.x - event.deltaX,
@@ -472,12 +477,23 @@ const App = () => {
         }));
       }
     };
-  
-    document.addEventListener("wheel", panOrZoomFunction);
+    const preventZoom = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === '-' || e.key === '=' || e.key === '+')) {
+        e.preventDefault();
+        if (e.key === '-') {
+          onZoom(-0.1);
+        } else if (e.key === '=' || e.key === '+') {
+          onZoom(0.1);
+        }
+      }
+    };
+    document.addEventListener("wheel", panOrZoomFunction, { passive: false });
+    document.addEventListener('keydown', preventZoom);
     return () => {
       document.removeEventListener("wheel", panOrZoomFunction);
+      document.removeEventListener('keydown', preventZoom);
     };
-  }, [pressedKeys]);
+  }, [pressedKeys]);  
   const onZoom = delta => {
     setScale(prevState => Math.min(Math.max(prevState + delta, 0.1), 2));
   };
