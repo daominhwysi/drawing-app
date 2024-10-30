@@ -33,7 +33,7 @@ const safeSetItem = (key, value) => {
   }
 };
 
-const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,setScale,onZoom,action,selectedElement,panOffset,scaleOffset,handleMouseDown,handleMouseMove,handleMouseUp,handleBlur,captureDrawnArea,handleDetectRegions,handleDownloadRegions
+const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,setScale,onZoom,action,selectedElement,panOffset,scaleOffset,handlePointerDown,handlePointerMove,handlePointerUp,handleBlur,captureDrawnArea,handleDetectRegions,handleDownloadRegions
 }) => {
   const textAreaRef = React.useRef(null);
   const backgroundCanvasRef = React.useRef(null);
@@ -474,9 +474,10 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
         <canvas
           id="canvas"
           ref={drawingCanvasRef}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={handlePointerUp}
+          style={{touchAction: 'none'}}
           className="absolute inset-0 z-1"
         />
       </div>

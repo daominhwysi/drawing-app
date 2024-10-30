@@ -6,7 +6,9 @@ import {
   createElement,
   drawElement,
 } from './element-utils';
+import { createPointerHandlers } from './handlePointer';
 import { createMouseHandlers } from './handleMouse';
+
 const captureRegionToPNG = (canvas, region, elements, scale, panOffset, scaleOffset) => {
   const tempCanvas = document.createElement('canvas');
   const ctx = tempCanvas.getContext('2d');
@@ -508,6 +510,31 @@ const App = () => {
     alert(`Đã tải xuống ${drawingRegions.length} vùng vẽ!`);
   };
   const {
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp
+  } = createPointerHandlers({
+    action,
+    setAction,
+    tool,
+    setTool,
+    elements,
+    setElements,
+    selectedElement,
+    setSelectedElement,
+    panOffset,
+    setPanOffset,
+    scale,
+    scaleOffset,
+    startPanMousePosition,
+    setStartPanMousePosition,
+    pressedKeys,
+    pencilSize,
+    setCaptureArea,
+    isDrawing,
+    setIsDrawing
+  });
+  const {
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
@@ -551,9 +578,12 @@ const App = () => {
       selectedElement={selectedElement}
       panOffset={panOffset}
       scaleOffset={scaleOffset}
+      handlePointerDown={handlePointerDown}
+      handlePointerMove={handlePointerMove}
+      handlePointerUp={handlePointerUp}
       handleMouseDown={handleMouseDown}
-      handleMouseMove={handleMouseMove}
       handleMouseUp={handleMouseUp}
+      handleMouseMove={handleMouseMove}
       handleBlur={handleBlur}
       handleDetectRegions={handleDetectRegions}
       handleDownloadRegions={handleDownloadRegions}
