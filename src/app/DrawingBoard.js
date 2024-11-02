@@ -44,6 +44,8 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
   const [showDownloadButton, setShowDownloadButton] = React.useState(false);
   const [isClient, setIsClient] = React.useState(false);
   const [darkMode, setDarkMode] = React.useState(false);
+  const [pencilColor, setPencilColor] = React.useState('#000000');
+  const getDefaultColor = () => darkMode ? '#ffffff' : '#000000';
 
   // Set isClient to true on mount
   React.useEffect(() => {
@@ -145,12 +147,11 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
     ctx.translate(panOffset.x * scale - scaleOffset.x, panOffset.y * scale - scaleOffset.y);
     ctx.scale(scale, scale);
 
-    const drawColor = darkMode ? '#000000' : '#ffffff';
 
     elements.forEach(element => {
       if (element.type === 'pencil') {
         ctx.beginPath();
-        ctx.strokeStyle = drawColor;
+        ctx.strokeStyle = element.color || pencilColor || getDefaultColor();
         ctx.lineWidth = element.size;
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
@@ -165,13 +166,13 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
         ctx.stroke();
       } else if (element.type === 'line') {
         ctx.beginPath();
-        ctx.strokeStyle = drawColor;
+        ctx.strokeStyle = element.color || pencilColor || getDefaultColor();
         ctx.lineWidth = 2;
         ctx.moveTo(element.x1, element.y1);
         ctx.lineTo(element.x2, element.y2);
         ctx.stroke();
       } else if (element.type === 'rectangle') {
-        ctx.strokeStyle = drawColor;
+        ctx.strokeStyle = element.color || pencilColor || getDefaultColor();
         ctx.lineWidth = 2;
         ctx.strokeRect(
           element.x1,
@@ -181,14 +182,28 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
         );
       } else if (element.type === 'text') {
         ctx.font = '24px sans-serif';
-        ctx.fillStyle = drawColor;
+        ctx.fillStyle = element.color || pencilColor || getDefaultColor();
         ctx.fillText(element.text, element.x1, element.y1);
       }
     });
 
     ctx.restore();
-  }, [elements, scale, panOffset, scaleOffset, darkMode]);
-
+  }, [elements, scale, panOffset, scaleOffset, darkMode, pencilColor]);
+  const isValidHexColor = (color) => {
+    return /^#[0-9A-Fa-f]{6}$/.test(color);
+  };
+  const handleColorChange = (value) => {
+    // Allow partial input while typing
+    if (value.match(/^#[0-9A-Fa-f]{0,6}$/)) {
+      setPencilColor(value);
+    }
+  };
+  const handleColorBlur = () => {
+    // Validate and format the color on blur
+    if (!isValidHexColor(pencilColor)) {
+      setPencilColor(getDefaultColor());
+    }
+  };
   React.useEffect(() => {
     if (!isClient) return;
     
@@ -241,29 +256,75 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
       {/* Corner Menu Button */}
       <button
         onClick={() => setIsMenuOpen(!isMenuOpen)}
-        className={`fixed top-4 left-4 z-20 p-2 ${barBgColor} rounded-lg shadow-lg hover:bg-opacity-80`}
+        className={`fixed top-2 left-2 z-20 p-0.5 ${barBgColor} rounded-lg shadow-lg hover:bg-opacity-80`}
       >
         {isMenuOpen ? 
-          <X size={24} color={iconColor} /> : 
-          <Menu size={24} color={iconColor} />
+          <X size={20} color={iconColor} /> : 
+          <Menu size={20} color={iconColor} />
         }
       </button>
 
       {/* Corner Menu Panel */}
       {isMenuOpen && (
-        <div className={`fixed top-16 left-4 z-20 ${barBgColor} rounded-lg shadow-lg p-4 w-64`}>
-          <div className="flex flex-col gap-4">
+        <div className={`fixed top-10 left-4 z-20 ${barBgColor} rounded-lg shadow-lg p-2 w-48`}>
+          <div className="flex flex-col gap-2">
+            {/* Drawing Tools Section */}
+            <div className="flex items-center ml-2">
+                <div className="relative group">
+                  <input
+                    type="color"
+                    value={pencilColor}
+                    onChange={(e) => setPencilColor(e.target.value)}
+                    className="w-8 h-8 p-0 border-2 border-gray-300 rounded-lg cursor-pointer overflow-hidden hover:border-blue-500 transition-colors duration-200"
+                    style={{
+                      backgroundColor: 'transparent',
+                    }}
+                    title="Choose Color"
+                  />
+                </div>
+              </div>
+            <div className="border-b border-gray-200 pb-2">
+              <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-2 block`}>
+                Drawing Tools
+              </span>
+              <div className="flex flex-col gap-1">
+                <button
+                  onClick={() => setTool('line')}
+                  className={`w-full flex items-center justify-between p-2 rounded ${
+                    tool === 'line' ? 'bg-blue-500' : darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                  }`}
+                >
+                  <span className={`text-xs ${tool === 'line' ? 'text-white' : darkMode ? 'text-gray-600' : 'text-white'}`}>
+                    Line Tool
+                  </span>
+                  <Minus size={16} color={tool === 'line' ? '#ffffff' : iconColor} />
+                </button>
+                <button
+                  onClick={() => setTool('rectangle')}
+                  className={`w-full flex items-center justify-between p-2 rounded ${
+                    tool === 'rectangle' ? 'bg-blue-500' : darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                  }`}
+                >
+                  <span className={`text-xs ${tool === 'rectangle' ? 'text-white' : darkMode ? 'text-gray-600' : 'text-white'}`}>
+                    Rectangle Tool
+                  </span>
+                  <Square size={16} color={tool === 'rectangle' ? '#ffffff' : iconColor} />
+                </button>
+              </div>
+            </div>
+            
+
             {/* Theme Toggle */}
             <button
               onClick={toggleDarkMode}
               className={`w-full flex items-center justify-between p-2 rounded hover:bg-opacity-80 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
             >
-              <span className={`text-sm ${darkMode ? 'text-gray-600' : 'text-white'}`}>
+              <span className={`text-xs ${darkMode ? 'text-gray-600' : 'text-white'}`}>
                 {darkMode ? 'Light Mode' : 'Dark Mode'}
               </span>
               {darkMode ? 
-                <Sun size={20} color={iconColor} /> : 
-                <Moon size={20} color={iconColor} />
+                <Sun size={16} color={iconColor} /> : 
+                <Moon size={16} color={iconColor} />
               }
             </button>
 
@@ -272,27 +333,28 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
               onClick={() => setBackgroundType(prev => prev === 'grid' ? 'none' : 'grid')}
               className={`w-full flex items-center justify-between p-2 rounded hover:bg-opacity-80 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
             >
-              <span className={`text-sm ${darkMode ? 'text-gray-600' : 'text-white'}`}>
+              <span className={`text-xs ${darkMode ? 'text-gray-600' : 'text-white'}`}>
                 Show Grid
               </span>
               <Grid 
-                size={20} 
+                size={16} 
                 color={iconColor}
                 className={backgroundType === 'grid' ? 'opacity-100' : 'opacity-50'}
               />
             </button>
+
             <button
               onClick={toggleBackground}
               className={`w-full flex items-center justify-between p-2 rounded hover:bg-opacity-80 ${
                 darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
               }`}
             >
-              <span className={`text-sm ${darkMode ? 'text-black' : 'text-white'}`}>
+              <span className={`text-xs ${darkMode ? 'text-black' : 'text-white'}`}>
                 {backgroundType === 'none' ? 'No Grid' : 
                 backgroundType === 'grid' ? 'Grid Lines' : 'Grid Dots'}
               </span>
               <Grid 
-                size={20} 
+                size={16} 
                 color={iconColor}
                 className={backgroundType !== 'none' ? 'opacity-100' : 'opacity-50'}
               />
@@ -301,10 +363,10 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
             {backgroundType !== 'none' && (
               <div className="flex flex-col gap-2 p-2">
                 <div className="flex items-center justify-between">
-                  <span className={`text-sm ${darkMode ? 'text-black' : 'text-white'}`}>
+                  <span className={`text-xs ${darkMode ? 'text-black' : 'text-white'}`}>
                     Grid Size
                   </span>
-                  <span className={`text-sm ${darkMode ? 'text-black' : 'text-white'}`}>
+                  <span className={`text-xs ${darkMode ? 'text-black' : 'text-white'}`}>
                     {gridSize}px
                   </span>
                 </div>
@@ -318,48 +380,12 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
                 />
               </div>
             )}
-            <style jsx global>{`
-              input[type="range"] {
-                -webkit-appearance: none;
-                height: 4px;
-                background: ${darkMode ? '#ffffff40' : '#00000040'};
-                border-radius: 2px;
-                outline: none;
-              }
-
-              input[type="range"]::-webkit-slider-thumb {
-                -webkit-appearance: none;
-                appearance: none;
-                width: 12px;
-                height: 12px;
-                background: ${darkMode ? '#ffffff' : '#000000'};
-                border-radius: 50%;
-                cursor: pointer;
-              }
-
-              input[type="range"]::-moz-range-thumb {
-                width: 12px;
-                height: 12px;
-                background: ${darkMode ? '#ffffff' : '#000000'};
-                border-radius: 50%;
-                cursor: pointer;
-                border: none;
-              }
-
-              input[type="range"]:hover::-webkit-slider-thumb {
-                background: #3b82f6;
-              }
-
-              input[type="range"]:hover::-moz-range-thumb {
-                background: #3b82f6;
-              }
-            `}</style>
             {/* Region Detection */}
             <button
               onClick={handleDetectAndShowDownload}
               className={`w-full flex items-center justify-between p-2 rounded hover:bg-opacity-80 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
             >
-              <span className={`text-sm ${darkMode ? 'text-gray-600' : 'text-white'}`}>
+              <span className={`text-xs ${darkMode ? 'text-gray-600' : 'text-white'}`}>
                 Detect Regions
               </span>
               <Scan size={20} color={iconColor} />
@@ -367,90 +393,94 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
           </div>
         </div>
       )}
-
+      
       {/* Main Toolbar */}
       <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-1 ${barBgColor} rounded-lg shadow-lg p-1 z-10`}>
-        <div className="flex items-center gap-1 px-1">
-          <button
-            onClick={() => setTool('selection')}
-            className={`p-1 rounded ${tool === 'selection' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
-            title="Selection"
-          >
-            <Hand size={16} color={tool === 'selection' ? '#ffffff' : iconColor} />
-          </button>
-          <button
-            onClick={() => setTool('line')}
-            className={`p-1 rounded ${tool === 'line' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
-            title="Line"
-          >
-            <Minus size={16} color={tool === 'line' ? '#ffffff' : iconColor} />
-          </button>
-          <button
-            onClick={() => setTool('rectangle')}
-            className={`p-1 rounded ${tool === 'rectangle' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
-            title="Rectangle"
-          >
-            <Square size={16} color={tool === 'rectangle' ? '#ffffff' : iconColor} />
-          </button>
-          <button
-            onClick={() => setTool('pencil')}
-            className={`p-1 rounded ${tool === 'pencil' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
-            title="Pencil"
-          >
-            <Pencil size={16} color={tool === 'pencil' ? '#ffffff' : iconColor} />
-          </button>
-          <button
-            onClick={() => setTool('eraser')}
-            className={`p-1 rounded ${tool === 'eraser' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
-            title="Eraser"
-          >
-            <Eraser size={16} color={tool === 'eraser' ? '#ffffff' : iconColor} />
-          </button>
-        {(tool === 'pencil') && (
-          <div className='flex items-center gap-1 ml-1'>
-            <Ruler size={14} color={iconColor} />
-            <input
-              type="range"
-              min="1"
-              max="20"
-              value={pencilSize}
-              onChange={(e) => setPencilSize(parseInt(e.target.value))}
-              className="w-20 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
-              title="Pencil Size"
-            />
-            <span className={`text-xs ${textColor}`}>{pencilSize}px</span>
-          </div>
-        )}
-        </div>
-        <div className="flex items-center gap-1 pl-1 border-l border-gray-200">
-          <button
-            onClick={() => setScale(1)}
-            className="p-1 rounded hover:bg-opacity-80"
-            title="Reset View"
-          >
-            <RotateCcw size={16} color={iconColor} />
-          </button>
-          <button
-            onClick={() => onZoom(-0.1)}
-            className="p-1 rounded hover:bg-opacity-80"
-            title="Zoom Out"
-          >
-            <ZoomOut size={16} color={iconColor} />
-          </button>
-          <span className={`text-xs min-w-[3rem] text-center ${textColor}`}>
-            {Math.round(scale * 100)}%
-          </span>
-          <button
-            onClick={() => onZoom(0.1)}
-            className="p-1 rounded hover:bg-opacity-80"
-            title="Zoom In"
-          >
-            <ZoomIn size={16} color={iconColor} />
-          </button>
-        </div>
-      </div>
+      <div className="flex items-center gap-1 px-1">
+        <button
+          onClick={() => setTool('selection')}
+          className={`p-1 rounded ${tool === 'selection' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
+          title="Selection"
+        >
+          <Hand size={16} color={tool === 'selection' ? '#ffffff' : iconColor} />
+        </button>
+        <button
+          onClick={() => setTool('pencil')}
+          className={`p-1 rounded ${tool === 'pencil' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
+          title="Pencil"
+        >
+          <Pencil size={16} color={tool === 'pencil' ? '#ffffff' : iconColor} />
+        </button>
+        <button
+          onClick={() => setTool('eraser')}
+          className={`p-1 rounded ${tool === 'eraser' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
+          title="Eraser"
+        >
+          <Eraser size={16} color={tool === 'eraser' ? '#ffffff' : iconColor} />
+        </button>
 
-      {/* Download Button */}
+        {tool === 'pencil' && (
+          <>
+            <div className="flex items-center gap-1 ml-1">
+              <Ruler size={14} color={iconColor} />
+              <input
+                type="range"
+                min="1"
+                max="20"
+                value={pencilSize}
+                onChange={(e) => setPencilSize(parseInt(e.target.value))}
+                className="w-20 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
+                title="Pencil Size"
+              />
+              <span className={`text-xs ${textColor}`}>{pencilSize}px</span>
+            </div>
+            <div className="flex items-center ml-2">
+                <div className="relative group">
+                  <input
+                    type="color"
+                    value={pencilColor}
+                    onChange={(e) => setPencilColor(e.target.value)}
+                    className="w-8 h-8 p-0 border-2 border-gray-300 rounded-lg cursor-pointer overflow-hidden hover:border-blue-500 transition-colors duration-200"
+                    style={{
+                      backgroundColor: 'transparent',
+                    }}
+                    title="Choose Color"
+                  />
+                </div>
+              </div>
+            
+          </>
+        )}
+      </div>
+    </div>
+
+      {/* Zoom Controls - Bottom Left */}
+      <div className={`fixed bottom-4 left-4 flex items-center gap-1 ${barBgColor} rounded-lg shadow-lg p-1 z-10`}>
+        <button
+          onClick={() => setScale(1)}
+          className="p-1 rounded hover:bg-opacity-80"
+          title="Reset View"
+        >
+          <RotateCcw size={16} color={iconColor} />
+        </button>
+        <button
+          onClick={() => onZoom(-0.1)}
+          className="p-1 rounded hover:bg-opacity-80"
+          title="Zoom Out"
+        >
+          <ZoomOut size={16} color={iconColor} />
+        </button>
+        <span className={`text-xs min-w-[3rem] text-center ${textColor}`}>
+          {Math.round(scale * 100)}%
+        </span>
+        <button
+          onClick={() => onZoom(0.1)}
+          className="p-1 rounded hover:bg-opacity-80"
+          title="Zoom In"
+        >
+          <ZoomIn size={16} color={iconColor} />
+        </button>
+      </div>,
       {showDownloadButton && (
         <button
           onClick={() => {
@@ -463,8 +493,6 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
           Download Detected Regions
         </button>
       )}
-
-
       {/* Canvas Container */}
       <div className="absolute inset-0">
         <canvas
@@ -481,7 +509,7 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
           className="absolute inset-0 z-1"
         />
       </div>
-
+      
       {/* Text Area for Writing */}
       {action === "writing" && (
         <textarea
@@ -505,6 +533,7 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
           }}
         />
       )}
+      
     </div>
   );
 };
