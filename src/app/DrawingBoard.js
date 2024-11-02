@@ -1,6 +1,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {  Pencil, Hand, Square, Eraser,Sun, Moon,ZoomIn,ZoomOut,Grid,Minus,RotateCcw,Scan,Download,Menu,X,Ruler,Settings,Keyborad
 } from 'lucide-react';
+import { Pencil1Icon , EraserIcon, CursorArrowIcon, HamburgerMenuIcon } from '@radix-ui/react-icons';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
+
 
 const isLocalStorageAvailable = () => {
   try {
@@ -32,6 +44,7 @@ const safeSetItem = (key, value) => {
     console.warn(`Error writing ${key} to localStorage:`, e);
   }
 };
+
 
 const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,setScale,onZoom,action,selectedElement,panOffset,scaleOffset,handlePointerDown,handlePointerMove,handlePointerUp,handleBlur,captureDrawnArea,handleDetectRegions,handleDownloadRegions
 }) => {
@@ -254,146 +267,80 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
   return (
     <div className={`relative w-full h-screen ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
       {/* Corner Menu Button */}
-      <button
-        onClick={() => setIsMenuOpen(!isMenuOpen)}
-        className={`fixed top-2 left-2 z-20 p-0.5 ${barBgColor} rounded-lg shadow-lg hover:bg-opacity-80`}
-      >
-        {isMenuOpen ? 
-          <X size={20} color={iconColor} /> : 
-          <Menu size={20} color={iconColor} />
-        }
-      </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="icon" className="absolute top-4 left-4 z-10"><HamburgerMenuIcon className="h-4 w-4"/></Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-56 ml-4">
 
-      {/* Corner Menu Panel */}
-      {isMenuOpen && (
-        <div className={`fixed top-10 left-4 z-20 ${barBgColor} rounded-lg shadow-lg p-2 w-48`}>
-          <div className="flex flex-col gap-2">
-            {/* Drawing Tools Section */}
-            <div className="flex items-center ml-2">
-                <div className="relative group">
-                  <input
-                    type="color"
-                    value={pencilColor}
-                    onChange={(e) => setPencilColor(e.target.value)}
-                    className="w-8 h-8 p-0 border-2 border-gray-300 rounded-lg cursor-pointer overflow-hidden hover:border-blue-500 transition-colors duration-200"
-                    style={{
-                      backgroundColor: 'transparent',
-                    }}
-                    title="Choose Color"
-                  />
-                </div>
-              </div>
-            <div className="border-b border-gray-200 pb-2">
-              <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'} mb-2 block`}>
-                Drawing Tools
+          {/* Color Picker */}
+          <DropdownMenuItem>
+            <input
+              type="color"
+              value={pencilColor}
+              onChange={(e) => setPencilColor(e.target.value)}
+              className="w-8 h-8 p-0 border-2 border-gray-300 rounded-lg cursor-pointer"
+              title="Choose Color"
+            />
+          </DropdownMenuItem>
+
+          {/* Tool Selection */}
+          <DropdownMenuItem>
+            <button onClick={() => setTool('line')} className={`flex items-center justify-between w-full p-2 rounded ${tool === 'line' ? 'bg-blue-500' : 'hover:bg-gray-100'}`}>
+              Line Tool
+            </button>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
+            <button onClick={() => setTool('rectangle')} className={`flex items-center justify-between w-full p-2 rounded ${tool === 'rectangle' ? 'bg-blue-500' : 'hover:bg-gray-100'}`}>
+              Rectangle Tool
+            </button>
+          </DropdownMenuItem>
+
+          {/* Theme Toggle */}
+          <DropdownMenuItem>
+            <button onClick={toggleDarkMode} className={`flex items-center justify-between w-full p-2 rounded hover:bg-opacity-80`}>
+              {darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+            </button>
+          </DropdownMenuItem>
+
+          {/* Grid Toggle */}
+          <DropdownMenuItem>
+            <button onClick={() => setBackgroundType(prev => prev === 'grid' ? 'none' : 'grid')} className={`flex items-center justify-between w-full p-2 rounded hover:bg-opacity-80`}>
+              {backgroundType === 'grid' ? 'Hide Grid' : 'Show Grid'}
+            </button>
+          </DropdownMenuItem>
+
+          {/* Detect Regions */}
+          <DropdownMenuItem>
+            <button onClick={handleDetectRegions} className={`flex items-center justify-between w-full p-2 rounded hover:bg-opacity-80`}>
+              Detect Regions
+            </button>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+        {/* Grid Size Adjustment */}
+        {backgroundType !== 'none' && (
+          <div className="flex flex-col gap-2 p-2">
+            <div className="flex items-center justify-between">
+              <span className={`text-xs ${darkMode ? 'text-black' : 'text-black'}`}>
+                Grid Size
               </span>
-              <div className="flex flex-col gap-1">
-                <button
-                  onClick={() => setTool('line')}
-                  className={`w-full flex items-center justify-between p-2 rounded ${
-                    tool === 'line' ? 'bg-blue-500' : darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                  }`}
-                >
-                  <span className={`text-xs ${tool === 'line' ? 'text-white' : darkMode ? 'text-gray-600' : 'text-white'}`}>
-                    Line Tool
-                  </span>
-                  <Minus size={16} color={tool === 'line' ? '#ffffff' : iconColor} />
-                </button>
-                <button
-                  onClick={() => setTool('rectangle')}
-                  className={`w-full flex items-center justify-between p-2 rounded ${
-                    tool === 'rectangle' ? 'bg-blue-500' : darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-                  }`}
-                >
-                  <span className={`text-xs ${tool === 'rectangle' ? 'text-white' : darkMode ? 'text-gray-600' : 'text-white'}`}>
-                    Rectangle Tool
-                  </span>
-                  <Square size={16} color={tool === 'rectangle' ? '#ffffff' : iconColor} />
-                </button>
-              </div>
+              <span className={`text-xs ${darkMode ? 'text-black' : 'text-black'}`}>
+                {gridSize}px
+              </span>
             </div>
-            
-
-            {/* Theme Toggle */}
-            <button
-              onClick={toggleDarkMode}
-              className={`w-full flex items-center justify-between p-2 rounded hover:bg-opacity-80 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-            >
-              <span className={`text-xs ${darkMode ? 'text-gray-600' : 'text-white'}`}>
-                {darkMode ? 'Light Mode' : 'Dark Mode'}
-              </span>
-              {darkMode ? 
-                <Sun size={16} color={iconColor} /> : 
-                <Moon size={16} color={iconColor} />
-              }
-            </button>
-
-            {/* Grid Toggle */}
-            <button
-              onClick={() => setBackgroundType(prev => prev === 'grid' ? 'none' : 'grid')}
-              className={`w-full flex items-center justify-between p-2 rounded hover:bg-opacity-80 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-            >
-              <span className={`text-xs ${darkMode ? 'text-gray-600' : 'text-white'}`}>
-                Show Grid
-              </span>
-              <Grid 
-                size={16} 
-                color={iconColor}
-                className={backgroundType === 'grid' ? 'opacity-100' : 'opacity-50'}
-              />
-            </button>
-
-            <button
-              onClick={toggleBackground}
-              className={`w-full flex items-center justify-between p-2 rounded hover:bg-opacity-80 ${
-                darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
-              }`}
-            >
-              <span className={`text-xs ${darkMode ? 'text-black' : 'text-white'}`}>
-                {backgroundType === 'none' ? 'No Grid' : 
-                backgroundType === 'grid' ? 'Grid Lines' : 'Grid Dots'}
-              </span>
-              <Grid 
-                size={16} 
-                color={iconColor}
-                className={backgroundType !== 'none' ? 'opacity-100' : 'opacity-50'}
-              />
-            </button>
-            
-            {backgroundType !== 'none' && (
-              <div className="flex flex-col gap-2 p-2">
-                <div className="flex items-center justify-between">
-                  <span className={`text-xs ${darkMode ? 'text-black' : 'text-white'}`}>
-                    Grid Size
-                  </span>
-                  <span className={`text-xs ${darkMode ? 'text-black' : 'text-white'}`}>
-                    {gridSize}px
-                  </span>
-                </div>
-                <input
-                  type="range"
-                  min="10"
-                  max="100"
-                  value={gridSize}
-                  onChange={(e) => setGridSize(parseInt(e.target.value))}
-                  className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
-            )}
-            {/* Region Detection */}
-            <button
-              onClick={handleDetectAndShowDownload}
-              className={`w-full flex items-center justify-between p-2 rounded hover:bg-opacity-80 ${darkMode ? 'hover:bg-gray-700' : 'hover:bg-gray-100'}`}
-            >
-              <span className={`text-xs ${darkMode ? 'text-gray-600' : 'text-white'}`}>
-                Detect Regions
-              </span>
-              <Scan size={20} color={iconColor} />
-            </button>
+            <input
+              type="range"
+              min="10"
+              max="100"
+              value={gridSize}
+              onChange={(e) => setGridSize(parseInt(e.target.value))}
+              className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
+            />
           </div>
-        </div>
-      )}
+        )}
       
+    
       {/* Main Toolbar */}
       <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-1 ${barBgColor} rounded-lg shadow-lg p-1 z-10`}>
       <div className="flex items-center gap-1 px-1">
@@ -402,38 +349,26 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
           className={`p-1 rounded ${tool === 'selection' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
           title="Selection"
         >
-          <Hand size={16} color={tool === 'selection' ? '#ffffff' : iconColor} />
+          <CursorArrowIcon size={16} color={tool === 'selection' ? '#ffffff' : iconColor} />
         </button>
         <button
           onClick={() => setTool('pencil')}
           className={`p-1 rounded ${tool === 'pencil' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
           title="Pencil"
         >
-          <Pencil size={16} color={tool === 'pencil' ? '#ffffff' : iconColor} />
+          <Pencil1Icon size={16} color={tool === 'pencil' ? '#ffffff' : iconColor} />
         </button>
         <button
           onClick={() => setTool('eraser')}
           className={`p-1 rounded ${tool === 'eraser' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
           title="Eraser"
         >
-          <Eraser size={16} color={tool === 'eraser' ? '#ffffff' : iconColor} />
+          <EraserIcon size={16} color={tool === 'eraser' ? '#ffffff' : iconColor} />
         </button>
 
         {tool === 'pencil' && (
           <>
-            <div className="flex items-center gap-1 ml-1">
-              <Ruler size={14} color={iconColor} />
-              <input
-                type="range"
-                min="1"
-                max="20"
-                value={pencilSize}
-                onChange={(e) => setPencilSize(parseInt(e.target.value))}
-                className="w-20 h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
-                title="Pencil Size"
-              />
-              <span className={`text-xs ${textColor}`}>{pencilSize}px</span>
-            </div>
+
             <div className="flex items-center ml-2">
                 <div className="relative group">
                   <input
