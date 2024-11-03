@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {  Pencil, Hand, Square, Eraser,Sun, Moon,ZoomIn,ZoomOut,Grid,Minus,RotateCcw,Scan,Download,Menu,X,Ruler,Settings,Keyborad, Heart, MoreHorizontal
+import {  Pencil, Hand, Square, Eraser,Sun, Moon,ZoomIn,ZoomOut,Grid,Minus,RotateCcw,Scan,Download,Menu,X,Ruler,Settings,Keyborad, Heart, MoreHorizontal, Pen
 } from 'lucide-react';
 import { Pencil1Icon , EraserIcon, CursorArrowIcon, HamburgerMenuIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
@@ -284,17 +284,29 @@ const DrawingBoard = ({ tool,
       <MenuComponent/>
       
       <div className="fixed left-1/2 top-4 -translate-x-1/2 flex flex-col items-start z-10 bg-background">
-        <ToolToggleGroup setSelectedTool={setSelectedTool} />
+        <ToolToggleGroup 
+          setSelectedTool={setSelectedTool}
+          tool={tool}                // thêm prop tool
+          setTool={setTool} 
+         />
         {/* Chỉ hiển thị phần Pen section nếu công cụ được chọn là 'pen' */}
         {selectedTool === 'pen' && (
           <div className="flex items-center gap-1 rounded-lg shadow-lg p-1 z-10 border mt-2 z-10">
-            <Button className="h-8 w-8 rounded" title="New Tool 1" variant="ghost">
+            <Button onClick={() => setTool('pencil')} className="h-8 w-8 rounded" title="New Tool 1" variant="ghost">
+              
+              <Pen className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+        {selectedTool === 'shapes' && (
+          <div className="flex items-center gap-1 rounded-lg shadow-lg p-1 z-10 border mt-2 z-10">
+            <Button onClick={() => setTool('rectangle')} className="h-8 w-8 rounded" title="New Tool 1" variant="ghost">
               <Square className="h-4 w-4" />
             </Button>
             <Button className="h-8 w-8 rounded" title="New Tool 2" variant="ghost">
               <Heart className="h-4 w-4" />
             </Button>
-            <Button className="h-8 w-8 rounded" title="New Tool 3" variant="ghost">
+            <Button onClick={() => setTool('line')} className="h-8 w-8 rounded" title="New Tool 3" variant="ghost">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </div>
