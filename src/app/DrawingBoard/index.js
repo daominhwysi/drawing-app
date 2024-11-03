@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {  Pencil, Hand, Square, Eraser,Sun, Moon,ZoomIn,ZoomOut,Grid,Minus,RotateCcw,Scan,Download,Menu,X,Ruler,Settings,Keyborad
+import {  Pencil, Hand, Square, Eraser,Sun, Moon,ZoomIn,ZoomOut,Grid,Minus,RotateCcw,Scan,Download,Menu,X,Ruler,Settings,Keyborad, Heart, MoreHorizontal
 } from 'lucide-react';
 import { Pencil1Icon , EraserIcon, CursorArrowIcon, HamburgerMenuIcon } from '@radix-ui/react-icons';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import MenuComponent from './menu';
+import ToolToggleGroup from './toolbar';
 
 
 
@@ -46,7 +48,20 @@ const safeSetItem = (key, value) => {
 };
 
 
-const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,setScale,onZoom,action,selectedElement,panOffset,scaleOffset,handlePointerDown,handlePointerMove,handlePointerUp,handleBlur,captureDrawnArea,handleDetectRegions,handleDownloadRegions
+const DrawingBoard = ({ tool,
+  setTool,
+  elements,
+  pencilSize,
+  setPencilSize,
+  scale,
+  setScale,
+  onZoom,
+  action,
+  selectedElement,
+  panOffset,
+  scaleOffset,handlePointerDown,
+  handlePointerMove,handlePointerUp,
+  handleBlur,captureDrawnArea
 }) => {
   const textAreaRef = React.useRef(null);
   const backgroundCanvasRef = React.useRef(null);
@@ -57,7 +72,7 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
   const [showDownloadButton, setShowDownloadButton] = React.useState(false);
   const [isClient, setIsClient] = React.useState(false);
   const [darkMode, setDarkMode] = React.useState(false);
-  const [pencilColor, setPencilColor] = React.useState('#000000');
+  const [pencilColor, setPencilColor] = React.useState('#ffffff');
   const getDefaultColor = () => darkMode ? '#ffffff' : '#000000';
 
   // Set isClient to true on mount
@@ -259,163 +274,45 @@ const DrawingBoard = ({ tool,setTool,elements,pencilSize,setPencilSize,scale,set
     setIsMenuOpen(false);
   };
 
-  const iconColor = darkMode ? "#000000" : "#ffffff";
-  const barBgColor = darkMode ? "bg-white" : "bg-gray-800";
-  const textColor = darkMode ? 'text-black' : 'text-white';
+
+  const [selectedTool, setSelectedTool] = useState(null);
 
   // Rest of your component's JSX remains the same...
   return (
-    <div className={`relative w-full h-screen ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+    <div className={`relative w-full h-screen overflow-x-hidden overflow-y-hidden`}>
       {/* Corner Menu Button */}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="absolute top-4 left-4 z-10"><HamburgerMenuIcon className="h-4 w-4"/></Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-56 ml-4">
-
-          {/* Color Picker */}
-          <DropdownMenuItem>
-            <input
-              type="color"
-              value={pencilColor}
-              onChange={(e) => setPencilColor(e.target.value)}
-              className="w-8 h-8 p-0 border-2 border-gray-300 rounded-lg cursor-pointer"
-              title="Choose Color"
-            />
-          </DropdownMenuItem>
-
-          {/* Tool Selection */}
-          <DropdownMenuItem>
-            <button onClick={() => setTool('line')} className={`flex items-center justify-between w-full p-2 rounded ${tool === 'line' ? 'bg-blue-500' : 'hover:bg-gray-100'}`}>
-              Line Tool
-            </button>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <button onClick={() => setTool('rectangle')} className={`flex items-center justify-between w-full p-2 rounded ${tool === 'rectangle' ? 'bg-blue-500' : 'hover:bg-gray-100'}`}>
-              Rectangle Tool
-            </button>
-          </DropdownMenuItem>
-
-          {/* Theme Toggle */}
-          <DropdownMenuItem>
-            <button onClick={toggleDarkMode} className={`flex items-center justify-between w-full p-2 rounded hover:bg-opacity-80`}>
-              {darkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-            </button>
-          </DropdownMenuItem>
-
-          {/* Grid Toggle */}
-          <DropdownMenuItem>
-            <button onClick={() => setBackgroundType(prev => prev === 'grid' ? 'none' : 'grid')} className={`flex items-center justify-between w-full p-2 rounded hover:bg-opacity-80`}>
-              {backgroundType === 'grid' ? 'Hide Grid' : 'Show Grid'}
-            </button>
-          </DropdownMenuItem>
-
-          {/* Detect Regions */}
-          <DropdownMenuItem>
-            <button onClick={handleDetectRegions} className={`flex items-center justify-between w-full p-2 rounded hover:bg-opacity-80`}>
-              Detect Regions
-            </button>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-        {/* Grid Size Adjustment */}
-        {backgroundType !== 'none' && (
-          <div className="flex flex-col gap-2 p-2">
-            <div className="flex items-center justify-between">
-              <span className={`text-xs ${darkMode ? 'text-black' : 'text-black'}`}>
-                Grid Size
-              </span>
-              <span className={`text-xs ${darkMode ? 'text-black' : 'text-black'}`}>
-                {gridSize}px
-              </span>
-            </div>
-            <input
-              type="range"
-              min="10"
-              max="100"
-              value={gridSize}
-              onChange={(e) => setGridSize(parseInt(e.target.value))}
-              className="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"
-            />
+      <MenuComponent/>
+      
+      <div className="fixed left-1/2 top-4 -translate-x-1/2 flex flex-col items-start z-10 bg-background">
+        <ToolToggleGroup setSelectedTool={setSelectedTool} />
+        {/* Chỉ hiển thị phần Pen section nếu công cụ được chọn là 'pen' */}
+        {selectedTool === 'pen' && (
+          <div className="flex items-center gap-1 rounded-lg shadow-lg p-1 z-10 border mt-2 z-10">
+            <Button className="h-8 w-8 rounded" title="New Tool 1" variant="ghost">
+              <Square className="h-4 w-4" />
+            </Button>
+            <Button className="h-8 w-8 rounded" title="New Tool 2" variant="ghost">
+              <Heart className="h-4 w-4" />
+            </Button>
+            <Button className="h-8 w-8 rounded" title="New Tool 3" variant="ghost">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
           </div>
         )}
-      
-    
-      {/* Main Toolbar */}
-      <div className={`fixed top-4 left-1/2 transform -translate-x-1/2 flex items-center gap-1 ${barBgColor} rounded-lg shadow-lg p-1 z-10`}>
-      <div className="flex items-center gap-1 px-1">
-        <button
-          onClick={() => setTool('selection')}
-          className={`p-1 rounded ${tool === 'selection' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
-          title="Selection"
-        >
-          <CursorArrowIcon size={16} color={tool === 'selection' ? '#ffffff' : iconColor} />
-        </button>
-        <button
-          onClick={() => setTool('pencil')}
-          className={`p-1 rounded ${tool === 'pencil' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
-          title="Pencil"
-        >
-          <Pencil1Icon size={16} color={tool === 'pencil' ? '#ffffff' : iconColor} />
-        </button>
-        <button
-          onClick={() => setTool('eraser')}
-          className={`p-1 rounded ${tool === 'eraser' ? 'bg-blue-500' : 'hover:bg-opacity-80'}`}
-          title="Eraser"
-        >
-          <EraserIcon size={16} color={tool === 'eraser' ? '#ffffff' : iconColor} />
-        </button>
-
-        {tool === 'pencil' && (
-          <>
-
-            <div className="flex items-center ml-2">
-                <div className="relative group">
-                  <input
-                    type="color"
-                    value={pencilColor}
-                    onChange={(e) => setPencilColor(e.target.value)}
-                    className="w-8 h-8 p-0 border-2 border-gray-300 rounded-lg cursor-pointer overflow-hidden hover:border-blue-500 transition-colors duration-200"
-                    style={{
-                      backgroundColor: 'transparent',
-                    }}
-                    title="Choose Color"
-                  />
-                </div>
-              </div>
-            
-          </>
-        )}
       </div>
-    </div>
-
       {/* Zoom Controls - Bottom Left */}
-      <div className={`fixed bottom-4 left-4 flex items-center gap-1 ${barBgColor} rounded-lg shadow-lg p-1 z-10`}>
-        <button
-          onClick={() => setScale(1)}
-          className="p-1 rounded hover:bg-opacity-80"
-          title="Reset View"
-        >
-          <RotateCcw size={16} color={iconColor} />
-        </button>
-        <button
-          onClick={() => onZoom(-0.1)}
-          className="p-1 rounded hover:bg-opacity-80"
-          title="Zoom Out"
-        >
-          <ZoomOut size={16} color={iconColor} />
-        </button>
-        <span className={`text-xs min-w-[3rem] text-center ${textColor}`}>
-          {Math.round(scale * 100)}%
-        </span>
-        <button
-          onClick={() => onZoom(0.1)}
-          className="p-1 rounded hover:bg-opacity-80"
-          title="Zoom In"
-        >
-          <ZoomIn size={16} color={iconColor} />
-        </button>
-      </div>,
+      <div className="fixed bottom-4 left-4 flex items-center gap-1 rounded-lg shadow-lg p-1 z-10 border">
+          
+          <Button className="h-8 w-8 rounded" title="Zoom Out" variant="ghost" onClick={() => onZoom(-0.1)}>
+        <ZoomOut className="h-4 w-4" />
+      </Button>
+      <button className="text-xs min-w-[3rem] text-center" onClick={() => setScale(1)}>
+      {Math.round(scale * 100)}%
+      </button>
+      <Button variant="ghost" className="h-8 w-8 rounded" title="Zoom In" onClick={() => onZoom(0.1)}>
+        <ZoomIn className="h-4 w-4" />
+      </Button>
+    </div>
       {showDownloadButton && (
         <button
           onClick={() => {
